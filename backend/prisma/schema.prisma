@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  password     String?
+  picture      String?
+  name         String
+  refreshToken String?
+  googleId     String?   @unique
+  todos        Todo[]
+  comments     Comment[]
+  projects     Project[]
+}
+
+model Project {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  todos       Todo[]
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  subProjects Project[] @relation("SubProjects")
+  parentId    String?
+  parent      Project?  @relation("SubProjects", fields: [parentId], references: [id])
+}
+
+model Todo {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  createdAt   DateTime  @default(now())
+  done        Boolean   @default(false)
+  dueDate     DateTime?
+  priority    Int // Use a scale, e.g., 1-5
+  reminder    DateTime?
+  comments    Comment[]
+  projectId   String?
+  project     Project?  @relation(fields: [projectId], references: [id])
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  subTasks    SubTask[]
+}
+
+model SubTask {
+  id          String  @id @default(uuid())
+  title       String
+  description String?
+  done        Boolean @default(false)// Could be an enum for more strict type safety
+  todoId      String
+  todo        Todo    @relation(fields: [todoId], references: [id])
+}
+
+model Comment {
+  id      String @id @default(uuid())
+  content String
+  todoId  String
+  todo    Todo   @relation(fields: [todoId], references: [id])
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
+}
